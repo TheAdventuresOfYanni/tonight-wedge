@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0" />
+<meta name="theme-color" content="#0E0E10" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>tonight.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400&family=Inter:wght@400;450&display=swap" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  *:focus { outline: none; }
+
+  :root {
+    --ground: #0E0E10;
+    --paper: #F4EFE6;
+    --dim: rgba(244, 239, 230, 0.58);
+    --faint: rgba(244, 239, 230, 0.28);
+    --hair: rgba(244, 239, 230, 0.10);
+    --amber: #D4A35C;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --serif: 'Fraunces', 'Iowan Old Style', 'Palatino', Georgia, serif;
+    --sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+
+  html, body {
+    background: var(--ground);
+    color: var(--paper);
+    font-family: var(--sans);
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .serif {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-optical-sizing: auto;
+  }
+
+  /* ============================================================
+     PICKER
+     ============================================================ */
+  .picker {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 32px 28px max(env(safe-area-inset-bottom, 0px), 32px);
+    background:
+      radial-gradient(ellipse at 30% 18%, #251a14 0%, transparent 55%),
+      radial-gradient(ellipse at 78% 88%, #18141a 0%, transparent 65%),
+      var(--ground);
+    transition: opacity 420ms var(--ease);
+    z-index: 1;
+  }
+
+  .brand {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: 22px;
+    letter-spacing: -0.025em;
+    color: var(--dim);
+    position: absolute;
+    top: max(env(safe-area-inset-top, 0px), 28px);
+    left: 28px;
+  }
+
+  .mode-toggle {
+    position: absolute;
+    top: max(env(safe-area-inset-top, 0px), 28px);
+    right: 28px;
+    background: transparent;
+    border: none;
+    color: var(--dim);
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: color 200ms var(--ease);
+  }
+  .mode-toggle:active { color: var(--paper); }
+  .picker[data-mode="pair"] .mode-toggle { color: var(--amber); }
+
+  .picker-inner {
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 36px;
+  }
+
+  .picker-q {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: clamp(26px, 6.8vw, 32px);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--paper);
+    max-width: 14ch;
+  }
+
+  .chips { display: flex; flex-direction: column; gap: 9px; }
+
+  .chip {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 17px 20px;
+    border: 1px solid var(--hair);
+    border-radius: 100px;
+    background: transparent;
+    color: var(--paper);
+    font-family: inherit;
+    font-size: 15.5px;
+    cursor: pointer;
+    text-align: left;
+    transition: transform 220ms var(--ease), background 240ms var(--ease), border-color 240ms var(--ease), opacity 360ms var(--ease);
+  }
+  .chip:active { transform: scale(0.98); background: rgba(244, 239, 230, 0.04); }
+
+  .chip.confirmed {
+    border-color: rgba(212, 163, 92, 0.55);
+    background: rgba(212, 163, 92, 0.10);
+  }
+
+  .chip-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    flex-shrink: 0; opacity: 0.85;
+    transition: transform 220ms var(--ease);
+  }
+  .chip.confirmed .chip-dot { transform: scale(1.4); }
+
+  .chip[data-vibe="cozy-in"]    .chip-dot { background: #c98c5a; }
+  .chip[data-vibe="quiet-out"]  .chip-dot { background: #6b8a98; }
+  .chip[data-vibe="lively"]     .chip-dot { background: #c8635a; }
+  .chip[data-vibe="adventure"]  .chip-dot { background: #8a6db0; }
+  .chip[data-vibe="surprise"]   .chip-dot { background: var(--amber); animation: dotPulse 2.4s ease-in-out infinite; }
+
+  @keyframes dotPulse {
+    0%, 100% { opacity: 0.4; transform: scale(0.85); }
+    50% { opacity: 1; transform: scale(1.1); }
+  }
+
+  /* ============================================================
+     EXPANDER (chip → card morph, solo only)
+     ============================================================ */
+  .expander {
+    position: fixed; z-index: 5; pointer-events: none;
+    transition:
+      left 620ms var(--ease), top 620ms var(--ease),
+      width 620ms var(--ease), height 620ms var(--ease),
+      border-radius 620ms var(--ease);
+    will-change: left, top, width, height, border-radius;
+  }
+  .expander.full {
+    left: 0 !important; top: 0 !important;
+    width: 100vw !important; width: 100dvw !important;
+    height: 100vh !important; height: 100dvh !important;
+    border-radius: 0 !important;
+  }
+
+  /* ============================================================
+     HANDOFF (generic, dynamic copy)
+     ============================================================ */
+  .handoff {
+    position: fixed; inset: 0; z-index: 30;
+    display: flex; align-items: center; justify-content: center;
+    background:
+      radial-gradient(ellipse at 50% 35%, #1c1815 0%, transparent 65%),
+      radial-gradient(ellipse at 50% 90%, #14101a 0%, transparent 75%),
+      var(--ground);
+    opacity: 0; pointer-events: none;
+    transition: opacity 480ms var(--ease);
+    cursor: pointer; padding: 32px;
+  }
+  .handoff.active { opacity: 1; pointer-events: auto; }
+
+  .handoff-inner { text-align: center; max-width: 360px; }
+
+  .handoff-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    color: var(--faint);
+    text-transform: uppercase;
+    margin-bottom: 22px;
+  }
+  .handoff-line {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: clamp(34px, 9vw, 48px);
+    letter-spacing: -0.028em;
+    line-height: 1.1;
+    color: var(--paper);
+    margin-bottom: 28px;
+  }
+  .handoff-hint {
+    color: var(--faint);
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    animation: handoffPulse 2.4s ease-in-out infinite;
+  }
+
+  .handoff.active .handoff-eyebrow { animation: handoffRise 600ms var(--ease) 80ms both; }
+  .handoff.active .handoff-line    { animation: handoffRise 800ms var(--ease) 200ms both; }
+  .handoff.active .handoff-hint    { animation: handoffPulse 2.4s ease-in-out 900ms infinite; }
+
+  @keyframes handoffRise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes handoffPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.7; }
+  }
+
+  /* ============================================================
+     COMMIT (anonymous in/another)
+     ============================================================ */
+  .commit {
+    position: fixed; inset: 0; z-index: 25;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 32px;
+    background:
+      radial-gradient(ellipse at 50% 25%, #221813 0%, transparent 60%),
+      radial-gradient(ellipse at 50% 92%, #14101a 0%, transparent 75%),
+      var(--ground);
+    opacity: 0; pointer-events: none;
+    transition: opacity 480ms var(--ease);
+  }
+  .commit.active { opacity: 1; pointer-events: auto; }
+
+  .commit-inner {
+    width: 100%; max-width: 340px;
+    text-align: center;
+  }
+
+  .commit-eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    color: var(--faint);
+    text-transform: uppercase;
+    margin-bottom: 22px;
+  }
+
+  .commit-line {
+    font-family: var(--serif);
+    font-weight: 300;
+    font-size: clamp(34px, 9vw, 46px);
+    letter-spacing: -0.028em;
+    line-height: 1.1;
+    color: var(--paper);
+    margin-bottom: 14px;
+  }
+
+  .commit-sub {
+    color: var(--dim);
+    font-size: 13.5px;
+    line-height: 1.5;
+    margin-bottom: 38px;
+    max-width: 26ch;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .commit-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .commit-btn {
+    padding: 17px 22px;
+    border-radius: 100px;
+    font-family: inherit;
+    font-size: 15px;
+    cursor: pointer;
+    border: 1px solid var(--hair);
+    background: transparent;
+    color: var(--paper);
+    transition: transform 140ms var(--ease), background 200ms var(--ease);
+    font-weight: 450;
+  }
+  .commit-btn:active { transform: scale(0.98); }
+  .commit-btn-yes {
+    background: var(--paper);
+    color: var(--ground);
+    border-color: var(--paper);
+    font-weight: 500;
+  }
+  .commit-btn-yes:active { background: #e8e2d6; }
+
+  .commit.active .commit-eyebrow { animation: handoffRise 600ms var(--ease) 80ms both; }
+  .commit.active .commit-line    { animation: handoffRise 700ms var(--ease) 200ms both; }
+  .commit.active .commit-sub     { animation: handoffRise 700ms var(--ease) 280ms both; }
+  .commit.active .commit-actions { animation: handoffRise 700ms var(--ease) 380ms both; }
+
+  /* ============================================================
+     CARD
+     ============================================================ */
+  .card {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    opacity: 0; pointer-events: none;
+    transition: opacity 380ms var(--ease);
+    z-index: 10;
+  }
+  .card.active { opacity: 1; pointer-events: auto; }
+
+  .card-bg {
+    position: absolute; inset: 0;
+    transition: background 900ms var(--ease), filter 900ms var(--ease);
+    z-index: 0;
+  }
+  .card-bg::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(14,14,16,0) 0%, rgba(14,14,16,0.35) 55%, rgba(14,14,16,0.85) 100%);
+  }
+  .card-bg::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.92' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.45 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    mix-blend-mode: overlay; opacity: 0.32; pointer-events: none;
+  }
+  .card.locked .card-bg { filter: saturate(1.15) brightness(1.05); }
+
+  /* Pair reveal animation — the card pops */
+  .card.reveal .card-bg { animation: revealBg 1000ms var(--ease) both; }
+  @keyframes revealBg {
+    from { opacity: 0; transform: scale(1.04); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  .card.reveal .card-anim > *:nth-child(1) { animation: revealRise 900ms var(--ease) 220ms both; }
+  .card.reveal .card-anim > *:nth-child(2) { animation: revealRise 900ms var(--ease) 380ms both; }
+  .card.reveal .card-anim > *:nth-child(3) { animation: revealRise 900ms var(--ease) 540ms both; }
+  @keyframes revealRise {
+    from { opacity: 0; transform: translateY(14px); filter: blur(4px); }
+    to   { opacity: 1; transform: translateY(0); filter: blur(0); }
+  }
+
+  .card-top {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: max(env(safe-area-inset-top, 0px), 18px) 22px 0;
+  }
+  .card-back {
+    background: transparent; border: none;
+    color: var(--dim);
+    font-size: 22px; line-height: 1;
+    padding: 8px 12px 8px 0;
+    cursor: pointer; font-family: inherit;
+    transition: color 200ms var(--ease);
+  }
+  .card-back:active { color: var(--paper); }
+  .card-tag {
+    font-size: 10px; letter-spacing: 0.24em;
+    color: var(--faint); text-transform: uppercase;
+  }
+  .card.locked .card-tag { color: var(--amber); }
+
+  .card-body {
+    position: relative; z-index: 1;
+    flex: 1;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    padding: 24px 26px max(env(safe-area-inset-bottom, 0px), 22px);
+  }
+  .card-prose {
+    font-family: var(--serif);
+    font-weight: 300; font-optical-sizing: auto;
+    font-size: clamp(26px, 6.6vw, 33px);
+    line-height: 1.2; letter-spacing: -0.02em;
+    margin-bottom: 12px; max-width: 22ch;
+    color: var(--paper); text-wrap: balance;
+  }
+  .card-meta {
+    color: var(--dim);
+    font-size: 13px; line-height: 1.55;
+    margin-bottom: 22px; max-width: 36ch;
+  }
+  .card-nudge {
+    display: none;
+    margin-bottom: 20px;
+    color: var(--dim);
+    font-size: 13px; line-height: 1.5;
+  }
+  .card-nudge.visible { display: block; }
+  .card-nudge a {
+    color: var(--paper);
+    text-decoration: none;
+    border-bottom: 1px solid var(--hair);
+    padding-bottom: 1px;
+    margin: 0 6px;
+    cursor: pointer;
+  }
+  .card-actions { display: flex; gap: 10px; }
+
+  .btn {
+    flex: 1;
+    padding: 17px 18px;
+    border: 1px solid rgba(244, 239, 230, 0.16);
+    border-radius: 100px;
+    background: rgba(14, 14, 16, 0.45);
+    backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+    color: var(--paper);
+    font-family: inherit;
+    font-size: 14.5px; font-weight: 450;
+    cursor: pointer;
+    transition: transform 140ms var(--ease), background 200ms var(--ease);
+    text-decoration: none; text-align: center;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary {
+    background: var(--paper); color: var(--ground); border-color: var(--paper);
+    font-weight: 500;
+  }
+  .btn-primary:active { background: #e8e2d6; }
+
+  .card-anim > * { animation: rise 600ms var(--ease) both; }
+  .card-anim > *:nth-child(2) { animation-delay: 80ms; }
+  .card-anim > *:nth-child(3) { animation-delay: 140ms; }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-height: 680px) {
+    .picker-inner { gap: 28px; }
+    .card-prose { font-size: clamp(22px, 6vw, 28px); }
+    .card-meta { margin-bottom: 16px; }
+    .commit-line { font-size: clamp(28px, 8vw, 38px); }
+    .commit-sub { margin-bottom: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ PICKER ============ -->
+<section class="picker" id="picker" data-mode="solo">
+  <div class="brand">tonight.</div>
+  <button class="mode-toggle" id="mode-toggle">for two →</button>
+  <div class="picker-inner">
+    <div class="picker-q serif" id="picker-q">what’s the night?</div>
+    <div class="chips" id="chips"></div>
+  </div>
+</section>
+
+<!-- ============ HANDOFF ============ -->
+<section class="handoff" id="handoff">
+  <div class="handoff-inner">
+    <div class="handoff-eyebrow" id="handoff-eyebrow">now</div>
+    <div class="handoff-line" id="handoff-line">pass the phone.</div>
+    <div class="handoff-hint" id="handoff-hint">tap when ready</div>
+  </div>
+</section>
+
+<!-- ============ COMMIT ============ -->
+<section class="commit" id="commit">
+  <div class="commit-inner">
+    <div class="commit-eyebrow">tonight is ready</div>
+    <div class="commit-line serif">are you in?</div>
+    <div class="commit-sub">commit without seeing it. you can swap later.</div>
+    <div class="commit-actions">
+      <button class="commit-btn commit-btn-yes" id="commit-yes">i’m in</button>
+      <button class="commit-btn" id="commit-no">show me a different one</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CARD ============ -->
+<section class="card" id="card">
+  <div class="card-bg" id="card-bg"></div>
+  <div class="card-top">
+    <button class="card-back" id="card-back" aria-label="Back">←</button>
+    <div class="card-tag" id="card-tag">tonight</div>
+  </div>
+  <div class="card-body" id="card-body"></div>
+</section>
+
+<script>
+// ============================================================
+// VIBE definitions
+// ============================================================
+const DEFAULT_VIBES = {
+  'cozy-in':   { mode: 'in',  energyBias: 'low',    moodBias: ['calm'] },
+  'quiet-out': { mode: 'out', energyBias: 'low',    moodBias: ['calm'] },
+  'lively':    { mode: 'out', energyBias: 'high',   moodBias: ['social'] },
+  'adventure': { mode: 'out', energyBias: 'medium', moodBias: ['curious'] },
+  'surprise':  { mode: null,  energyBias: null,     moodBias: null },
+};
+let VIBES = structuredClone(DEFAULT_VIBES);
+
+const VIBE_ORDER = ['cozy-in', 'quiet-out', 'lively', 'adventure', 'surprise'];
+
+const CHIP_LABEL = {
+  'cozy-in': 'cozy in',
+  'quiet-out': 'quiet out',
+  'lively': 'lively',
+  'adventure': 'a little adventure',
+  'surprise': 'surprise me',
+};
+
+const TAG_LABEL = {
+  'cozy-in': 'cozy in',
+  'quiet-out': 'quiet out',
+  'lively': 'lively',
+  'adventure': 'adventure',
+  'surprise': 'surprise',
+};
+
+const ENERGY_RANK = { low: 0, medium: 1, high: 2 };
+
+// ============================================================
+// POIs (Canggu seed — swap for your neighborhood)
+// ============================================================
+const POIS = [
+  { id:'la-baracca', mode:'out',
+    prose:'a plate of clams and chilled vermentino at La Baracca — the kind of meal you remember on the walk home.',
+    meta:'Berawa · ~Rp 250k each · ask for the table by the open kitchen',
+    energy:'low', mood:['calm','social'], bg:['#3a1f18','#0e0a08'], maps:'La Baracca Berawa Bali' },
+  { id:'honu-omakase', mode:'out',
+    prose:'the omakase counter at Honu — ten seats, the chef knows what you want before you do.',
+    meta:'Pererenan · ~Rp 950k · book the 7pm seating',
+    energy:'medium', mood:['curious','calm'], bg:['#1c2a36','#0a0f14'], maps:'Honu Izakaya Pererenan Bali' },
+  { id:'mason-burger', mode:'out',
+    prose:'a smash burger and a cold beer at Mason — busy, worth it.',
+    meta:'Pererenan · ~Rp 180k each · 20 min wait, sit at the bar',
+    energy:'medium', mood:['social','calm'], bg:['#2d1a10','#0e0805'], maps:'Mason Bali Pererenan' },
+  { id:'warung-bu-mi', mode:'out',
+    prose:'nasi campur at Warung Bu Mi — plastic chairs, perfect food, twenty minutes start to finish.',
+    meta:'Batu Bolong · ~Rp 35k · cash only',
+    energy:'low', mood:['calm','curious'], bg:['#3a2f15','#100c05'], maps:'Warung Bu Mi Canggu' },
+  { id:'mason-tasting', mode:'out',
+    prose:'the slow tasting menu at Mason — six courses, a Tuesday you’ll think about tomorrow.',
+    meta:'Pererenan · ~Rp 1.2M each · book 24h ahead',
+    energy:'low', mood:['calm','curious'], bg:['#241818','#0a0707'], maps:'Mason Pererenan Bali' },
+  { id:'da-maria', mode:'out',
+    prose:'a wood-fired margherita and a bottle of red at Da Maria — split the room with strangers.',
+    meta:'Pererenan · ~Rp 220k each · loud after 8',
+    energy:'high', mood:['social'], bg:['#3d1a14','#120605'], maps:'Da Maria Bali' },
+  { id:'crate-ramen', mode:'out',
+    prose:'a bowl of ramen at Crate — the kind of bowl that fixes a long day.',
+    meta:'Berawa · ~Rp 95k · in and out in thirty',
+    energy:'low', mood:['calm'], bg:['#1e2418','#080a06'], maps:'Crate Cafe Berawa' },
+  { id:'warung-eny', mode:'out',
+    prose:'green curry at Warung Eny — sit upstairs, the breeze is better up there.',
+    meta:'Batu Bolong · ~Rp 75k each · order the satay too',
+    energy:'low', mood:['calm','curious'], bg:['#2a3018','#0a0c05'], maps:'Warung Eny Canggu' },
+  { id:'luigis', mode:'out',
+    prose:'ceviche and a margarita at Luigi’s — the ceviche is the move.',
+    meta:'Batu Bolong · ~Rp 180k each · sit on the terrace',
+    energy:'medium', mood:['social','curious'], bg:['#2c2018','#0d0805'], maps:'Luigis Hot Pizza Canggu' },
+  { id:'la-brisa', mode:'out',
+    prose:'natural wine at La Brisa — sit on the cushions by the pool, lose an hour.',
+    meta:'Echo Beach · ~Rp 220k each · arrive 6:15 for sunset',
+    energy:'medium', mood:['social','calm'], bg:['#2d2415','#0c0905'], maps:'La Brisa Bali' },
+  { id:'lacalita', mode:'out',
+    prose:'mezcal flight at Lacalita — start there, dinner walks itself.',
+    meta:'Batu Bolong · ~Rp 150k each · ask Edu what’s good',
+    energy:'high', mood:['social','curious'], bg:['#2a1820','#0a0508'], maps:'Lacalita Bali' },
+  { id:'old-mans', mode:'out',
+    prose:'a quiet beer at Old Man’s — the Sunday-not-Sunday version, before the noise.',
+    meta:'Batu Bolong · ~Rp 70k · go before seven',
+    energy:'medium', mood:['social','calm'], bg:['#1f2a32','#070b0e'], maps:'Old Mans Canggu' },
+  { id:'salty-rooftop', mode:'out',
+    prose:'an aperol and the rooftop at Salty — seven o’clock light, almost too good.',
+    meta:'Berawa · ~Rp 160k each · they’ll seat you if you smile',
+    energy:'medium', mood:['calm','social'], bg:['#3a2818','#100a05'], maps:'Salty Sweet Pererenan' },
+  { id:'pretty-poison', mode:'out',
+    prose:'skate bowl and a Bintang at Pretty Poison — show up, watch, leave when you’re full.',
+    meta:'Canggu · ~Rp 80k · best on Thursdays',
+    energy:'high', mood:['curious','social'], bg:['#28182a','#080408'], maps:'Pretty Poison Canggu' },
+  { id:'echo-sunset', mode:'out',
+    prose:'sunset at Echo Beach — two beers, no phone, walk the long way back.',
+    meta:'Echo Beach · ~Rp 60k · 6:25 tonight',
+    energy:'low', mood:['calm'], bg:['#3a2010','#100905'], maps:'Echo Beach Bali' },
+  { id:'berawa-walk', mode:'out',
+    prose:'the long walk from Berawa to Batu Bolong before dinner — barefoot.',
+    meta:'45 min along the sand · free · 5:45 light is the one',
+    energy:'medium', mood:['calm','curious'], bg:['#2c2418','#0a0805'], maps:'Berawa Beach Bali' },
+  { id:'practice-sound', mode:'out',
+    prose:'a sound bath at The Practice — leave your phone in the locker.',
+    meta:'Canggu · ~Rp 250k · 7pm, arrive ten early',
+    energy:'low', mood:['calm'], bg:['#1f2530','#070a0e'], maps:'The Practice Bali' },
+  { id:'practice-yoga', mode:'out',
+    prose:'an evening restorative class at The Practice, then dinner you didn’t plan.',
+    meta:'Canggu · ~Rp 180k · 5:30 class',
+    energy:'low', mood:['calm'], bg:['#202a2a','#070b0b'], maps:'The Practice Bali' },
+  { id:'bodyworks-pho', mode:'out',
+    prose:'a massage at Bodyworks, then a slow bowl of pho — reset the night.',
+    meta:'Berawa · ~Rp 300k total · 7pm slot',
+    energy:'low', mood:['calm'], bg:['#231b1a','#080606'], maps:'Bodyworks Canggu' },
+  { id:'tanah-lot-ride', mode:'out',
+    prose:'scooter ride to Tanah Lot — the long way, no playlist.',
+    meta:'30 min west · ~Rp 60k entry · leave by 5:30',
+    energy:'high', mood:['curious','calm'], bg:['#2a1820','#080508'], maps:'Tanah Lot' },
+  { id:'unknown-warung', mode:'out',
+    prose:'point yourselves north, eat at the third warung you pass — no map, no reviews.',
+    meta:'pick a road, drive 15 min · ~Rp 50k each',
+    energy:'medium', mood:['curious'], bg:['#2a2418','#0a0805'], maps:null },
+  { id:'la-brisa-long-table', mode:'out',
+    prose:'the long table at La Brisa — no fewer than six, share everything.',
+    meta:'Echo Beach · ~Rp 280k each · call ahead',
+    energy:'high', mood:['social'], bg:['#2e2415','#0a0805'], maps:'La Brisa Bali' },
+  { id:'lemon-pasta', mode:'in',
+    prose:'cook the pasta with the lemon you’ve been meaning to use. open the white in the fridge.',
+    meta:'home · ~30 min · the lemon matters more than the recipe',
+    energy:'medium', mood:['calm'], bg:['#2a2818','#0a0905'], maps:null },
+  { id:'past-lives', mode:'in',
+    prose:'stay in. order from Warung Eny. watch Past Lives if you haven’t.',
+    meta:'home · ~Rp 75k each · 105 min, no second movie',
+    energy:'low', mood:['calm'], bg:['#1c1a28','#060508'], maps:null },
+  { id:'saved-wine', mode:'in',
+    prose:'the bottle you’ve been saving + nothing on the schedule.',
+    meta:'home · zero minutes · overhead light off',
+    energy:'low', mood:['calm'], bg:['#241818','#070505'], maps:null },
+  { id:'curry-recipe', mode:'in',
+    prose:'make the curry from the saved recipe. eat on the couch.',
+    meta:'home · ~45 min · rice cooker does most of it',
+    energy:'medium', mood:['calm','curious'], bg:['#2c2418','#0a0805'], maps:null },
+  { id:'long-bath', mode:'in',
+    prose:'long bath, no podcast, the new Sally Rooney.',
+    meta:'home · ninety minutes · phone on do-not-disturb',
+    energy:'low', mood:['calm'], bg:['#1f2530','#070a0e'], maps:null },
+  { id:'record-night', mode:'in',
+    prose:'put on the record you forgot you owned, open a bottle, let the night get itself.',
+    meta:'home · open-ended · lights off except the lamp',
+    energy:'medium', mood:['calm','curious'], bg:['#1a1f2a','#060709'], maps:null },
+  { id:'eggs-early-bed', mode:'in',
+    prose:'scrambled eggs, toast, an early bed. some nights are like this.',
+    meta:'home · fifteen minutes · this is allowed',
+    energy:'low', mood:['calm'], bg:['#1f1f1f','#070707'], maps:null },
+  { id:'two-ingredient', mode:'in',
+    prose:'two-ingredient pasta and the rest of the night to yourselves.',
+    meta:'home · twelve minutes · butter and parmesan',
+    energy:'low', mood:['calm'], bg:['#2a2516','#08070d'], maps:null },
+  { id:'codenames', mode:'in',
+    prose:'game night — Codenames at the kitchen table, takeaway from Warung Eny.',
+    meta:'home · ~3 hours · invite four, not eight',
+    energy:'high', mood:['social','curious'], bg:['#2a2018','#080605'], maps:null },
+  { id:'movie-aftersun', mode:'in',
+    prose:'movie night — Aftersun if you’re feeling brave, Past Lives if not.',
+    meta:'home · ~110 min · don’t skip the credits',
+    energy:'low', mood:['calm','curious'], bg:['#1c1d28','#060608'], maps:null },
+];
+
+// ============================================================
+// STATE
+// ============================================================
+const state = {
+  mode: 'solo',               // 'solo' | 'pair'
+  pulses: [],                 // vibes from each person
+  vibe: null,                 // merged vibe
+  secondary: null,
+  current: null,              // current POI under consideration
+  commits: [],                // pair: ['in' | 'another', ...]
+  nextAfterHandoff: null,     // 'pulse2' | 'commit2' | 'restart'
+  rejected: new Set(),
+  rejectStreak: 0,
+  locked: false,
+};
+
+// ============================================================
+// HELPERS
+// ============================================================
+const $ = sel => document.querySelector(sel);
+const haptic = (ms = 8) => { if (navigator.vibrate) try { navigator.vibrate(ms); } catch (e) {} };
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function makeBg([a, b]) {
+  return `radial-gradient(ellipse at 25% 18%, ${a} 0%, transparent 55%),` +
+         `radial-gradient(ellipse at 78% 88%, ${b} 0%, transparent 70%),` +
+         `linear-gradient(180deg, ${a} 0%, ${b} 100%)`;
+}
+
+// ============================================================
+// MERGE LOGIC (5 rules)
+// ============================================================
+function mergeVibes(v1, v2) {
+  if (v1 === 'surprise' && v2 === 'surprise') return { primary: 'surprise', secondary: 'surprise' };
+  if (v1 === 'surprise') return { primary: v2, secondary: 'surprise' };
+  if (v2 === 'surprise') return { primary: v1, secondary: 'surprise' };
+  if (v1 === v2) return { primary: v1, secondary: null };
+
+  const isIn = v => v === 'cozy-in';
+  if (isIn(v1) !== isIn(v2)) {
+    const outVibe = isIn(v1) ? v2 : v1;
+    return { primary: 'quiet-out', secondary: outVibe };
+  }
+
+  const energyOf = v => ({ 'quiet-out': 0, 'adventure': 1, 'lively': 2 }[v] ?? 0);
+  const lower = energyOf(v1) <= energyOf(v2) ? v1 : v2;
+  const higher = lower === v1 ? v2 : v1;
+  return { primary: lower, secondary: higher };
+}
+
+// ============================================================
+// SCORING
+// ============================================================
+function scoreCandidate(p, vibeKey, secondaryKey) {
+  const v = VIBES[vibeKey];
+  if (v.mode && p.mode !== v.mode) return -Infinity;
+
+  let s = Math.random() * 0.4;
+  if (v.energyBias) {
+    const de = Math.abs(ENERGY_RANK[p.energy] - ENERGY_RANK[v.energyBias]);
+    s += (de === 0 ? 2.0 : de === 1 ? 0.6 : -0.4);
+  }
+  if (v.moodBias) {
+    s += v.moodBias.some(m => p.mood.includes(m)) ? 1.6 : 0.0;
+  }
+  if (secondaryKey && secondaryKey !== vibeKey) {
+    const sv = VIBES[secondaryKey];
+    if (sv && sv.moodBias) {
+      s += sv.moodBias.some(m => p.mood.includes(m)) ? 0.8 : 0.0;
+    }
+    if (secondaryKey === 'surprise') s += Math.random() * 0.6;
+  }
+  return s;
+}
+
+function pickPOI() {
+  const ranked = POIS
+    .filter(p => !state.rejected.has(p.id))
+    .map(p => ({ p, s: scoreCandidate(p, state.vibe, state.secondary) }))
+    .filter(x => x.s > -Infinity)
+    .sort((a, b) => b.s - a.s);
+  if (!ranked.length) {
+    state.rejected.clear();
+    return pickPOI();
+  }
+  return ranked[0].p;
+}
+
+// ============================================================
+// CHIPS
+// ============================================================
+function renderChips(shuffled = false) {
+  const order = shuffled ? shuffle(VIBE_ORDER) : VIBE_ORDER;
+  const c = $('#chips');
+  c.innerHTML = order.map(v => `
+    <button class="chip" data-vibe="${v}">
+      <span class="chip-dot"></span>${CHIP_LABEL[v]}
+    </button>
+  `).join('');
+  c.querySelectorAll('.chip').forEach(chip => {
+    chip.style.opacity = '1';
+    chip.addEventListener('click', () => onChipTap(chip));
+  });
+}
+
+// ============================================================
+// CHIP TAP
+// ============================================================
+function onChipTap(chipEl) {
+  const vibe = chipEl.dataset.vibe;
+  haptic(10);
+
+  // PAIR: pulse 1
+  if (state.mode === 'pair' && state.pulses.length === 0) {
+    state.pulses.push(vibe);
+    chipEl.classList.add('confirmed');
+    setTimeout(() => {
+      $('#picker').style.opacity = '0';
+      showHandoff('pass the phone.', 'tap when ready', 'now');
+      state.nextAfterHandoff = 'pulse2';
+    }, 260);
+    return;
+  }
+
+  // PAIR: pulse 2 → resolve, then go straight to commit (person 2 holds the phone)
+  if (state.mode === 'pair' && state.pulses.length === 1) {
+    state.pulses.push(vibe);
+    const merged = mergeVibes(state.pulses[0], state.pulses[1]);
+    state.vibe = merged.primary;
+    state.secondary = merged.secondary;
+    state.current = pickPOI();
+    state.commits = [];
+    chipEl.classList.add('confirmed');
+    setTimeout(() => {
+      $('#picker').style.opacity = '0';
+      showCommit();
+    }, 260);
+    return;
+  }
+
+  // SOLO
+  state.vibe = vibe;
+  state.secondary = null;
+  state.current = pickPOI();
+  morphChipToCard(chipEl, state.current);
+}
+
+// ============================================================
+// CHIP → CARD MORPH (solo)
+// ============================================================
+function morphChipToCard(chipEl, poi) {
+  const rect = chipEl.getBoundingClientRect();
+  const expander = document.createElement('div');
+  expander.className = 'expander';
+  expander.style.background = makeBg(poi.bg);
+  expander.style.left = rect.left + 'px';
+  expander.style.top = rect.top + 'px';
+  expander.style.width = rect.width + 'px';
+  expander.style.height = rect.height + 'px';
+  expander.style.borderRadius = '100px';
+  document.body.appendChild(expander);
+
+  document.querySelectorAll('.chip').forEach(c => { if (c !== chipEl) c.style.opacity = '0'; });
+  requestAnimationFrame(() => expander.classList.add('full'));
+
+  setTimeout(() => {
+    $('#card-bg').style.background = makeBg(poi.bg);
+    $('#card-tag').textContent = TAG_LABEL[state.vibe] || 'tonight';
+    renderSoloCardBody(poi);
+    $('#card').classList.add('active');
+    setTimeout(() => expander.remove(), 60);
+  }, 600);
+}
+
+// ============================================================
+// SOLO CARD (with yes/another)
+// ============================================================
+function renderSoloCardBody(poi, { withNudge = false } = {}) {
+  const body = $('#card-body');
+  body.innerHTML = `
+    <div class="card-anim">
+      <div class="card-prose serif">${poi.prose}</div>
+      <div class="card-meta">${poi.meta}</div>
+      <div class="card-nudge ${withNudge ? 'visible' : ''}">
+        feeling something else?
+        <a data-dir="quieter">quieter</a>·<a data-dir="louder">louder</a>
+      </div>
+      <div class="card-actions" id="card-actions">
+        <button class="btn" id="btn-another">another</button>
+        <button class="btn btn-primary" id="btn-yes">yes — let’s do this</button>
+      </div>
+    </div>
+  `;
+  $('#btn-yes').addEventListener('click', () => { haptic(14); lockInSolo(poi); });
+  $('#btn-another').addEventListener('click', () => { haptic(6); rejectAndRoll(); });
+  if (withNudge) {
+    body.querySelectorAll('.card-nudge a').forEach(a => {
+      a.addEventListener('click', () => { haptic(10); applyNudge(a.dataset.dir); });
+    });
+  }
+}
+
+function rejectAndRoll() {
+  if (state.current) state.rejected.add(state.current.id);
+  state.rejectStreak += 1;
+  const next = pickPOI();
+  state.current = next;
+  $('#card-bg').style.background = makeBg(next.bg);
+  $('#card-tag').textContent = TAG_LABEL[state.vibe] || 'tonight';
+  renderSoloCardBody(next, { withNudge: state.rejectStreak >= 2 });
+}
+
+function applyNudge(dir) {
+  if (dir === 'quieter') {
+    if (state.vibe === 'lively' || state.vibe === 'adventure') state.vibe = 'quiet-out';
+    if (VIBES[state.vibe]) VIBES[state.vibe].energyBias = 'low';
+  } else {
+    if (state.vibe === 'quiet-out') state.vibe = 'lively';
+    if (VIBES[state.vibe]) VIBES[state.vibe].energyBias = 'high';
+  }
+  state.rejectStreak = 0;
+  if (state.current) state.rejected.add(state.current.id);
+  const next = pickPOI();
+  state.current = next;
+  $('#card-bg').style.background = makeBg(next.bg);
+  renderSoloCardBody(next);
+}
+
+function lockInSolo(poi) {
+  state.locked = true;
+  $('#card').classList.add('locked');
+  $('#card-tag').textContent = 'tonight’s plan';
+  swapToLockedActions(poi);
+}
+
+// ============================================================
+// COMMIT (pair anonymous)
+// ============================================================
+function showCommit() {
+  $('#commit').classList.add('active');
+}
+
+function onCommitTap(choice) {
+  haptic(12);
+  state.commits.push(choice);
+  $('#commit').classList.remove('active');
+
+  if (state.commits.length === 1) {
+    setTimeout(() => {
+      showHandoff('pass it back.', 'they tap too', 'now');
+      state.nextAfterHandoff = 'commit2';
+    }, 320);
+    return;
+  }
+
+  // both commits collected
+  const allIn = state.commits.every(c => c === 'in');
+  if (allIn) {
+    setTimeout(() => revealPairCard(state.current), 420);
+  } else {
+    // anonymous dissent → silent reroll
+    state.rejected.add(state.current.id);
+    state.current = pickPOI();
+    state.commits = [];
+    setTimeout(() => {
+      showHandoff('not this one.', 'pass it back', 'again');
+      state.nextAfterHandoff = 'restart';
+    }, 320);
+  }
+}
+
+// ============================================================
+// PAIR REVEAL — card pops, locked
+// ============================================================
+function revealPairCard(poi) {
+  $('#card-bg').style.background = makeBg(poi.bg);
+  $('#card-tag').textContent = 'tonight’s plan, together';
+  renderRevealedBody(poi);
+  const card = $('#card');
+  card.classList.add('reveal', 'locked', 'active');
+  state.locked = true;
+}
+
+function renderRevealedBody(poi) {
+  const dirHref = poi.maps
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(poi.maps)}`
+    : null;
+  const shareText = encodeURIComponent('tonight: ' + poi.prose);
+
+  $('#card-body').innerHTML = `
+    <div class="card-anim">
+      <div class="card-prose serif">${poi.prose}</div>
+      <div class="card-meta">${poi.meta}</div>
+      <div class="card-actions">
+        <button class="btn" id="btn-redo">new plan</button>
+        ${dirHref
+          ? `<a class="btn btn-primary" href="${dirHref}" target="_blank" rel="noopener">directions →</a>`
+          : `<a class="btn btn-primary" href="https://wa.me/?text=${shareText}" target="_blank" rel="noopener">share →</a>`}
+      </div>
+    </div>
+  `;
+  $('#btn-redo').addEventListener('click', () => { haptic(8); resetAll(); });
+}
+
+// Used by solo lock-in only
+function swapToLockedActions(poi) {
+  const dirHref = poi.maps
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(poi.maps)}`
+    : null;
+  const shareText = encodeURIComponent('tonight: ' + poi.prose);
+  const actions = $('#card-actions');
+  if (!actions) return;
+  actions.style.transition = 'opacity 220ms var(--ease), transform 280ms var(--ease)';
+  actions.style.opacity = '0';
+  actions.style.transform = 'translateY(8px)';
+  setTimeout(() => {
+    actions.innerHTML = dirHref
+      ? `<button class="btn" id="btn-redo">new plan</button>
+         <a class="btn btn-primary" href="${dirHref}" target="_blank" rel="noopener">directions →</a>`
+      : `<button class="btn" id="btn-redo">new plan</button>
+         <a class="btn btn-primary" href="https://wa.me/?text=${shareText}" target="_blank" rel="noopener">share →</a>`;
+    actions.style.opacity = '1';
+    actions.style.transform = 'translateY(0)';
+    $('#btn-redo').addEventListener('click', () => { haptic(8); resetAll(); });
+  }, 220);
+}
+
+// ============================================================
+// HANDOFF
+// ============================================================
+function showHandoff(line, hint, eyebrow) {
+  $('#handoff-line').textContent = line || 'pass the phone.';
+  $('#handoff-hint').textContent = hint || 'tap when ready';
+  $('#handoff-eyebrow').textContent = eyebrow || 'now';
+  $('#handoff').classList.add('active');
+}
+
+function onHandoffTap() {
+  haptic(8);
+  $('#handoff').classList.remove('active');
+  const next = state.nextAfterHandoff;
+  state.nextAfterHandoff = null;
+
+  if (next === 'pulse2') {
+    renderChips(true);
+    $('#picker').style.opacity = '1';
+  } else if (next === 'commit2') {
+    setTimeout(() => showCommit(), 240);
+  } else if (next === 'restart') {
+    setTimeout(() => showCommit(), 240);
+  }
+}
+
+// ============================================================
+// MODE + RESET
+// ============================================================
+function setMode(mode) {
+  state.mode = mode;
+  state.pulses = [];
+  state.commits = [];
+  state.rejected.clear();
+  state.rejectStreak = 0;
+  $('#picker').dataset.mode = mode;
+  $('#mode-toggle').textContent = mode === 'pair' ? '← just me' : 'for two →';
+  renderChips(false);
+  $('#picker').style.opacity = '1';
+}
+
+function resetAll() {
+  VIBES = structuredClone(DEFAULT_VIBES);
+  state.vibe = null;
+  state.secondary = null;
+  state.current = null;
+  state.rejected.clear();
+  state.rejectStreak = 0;
+  state.locked = false;
+  state.pulses = [];
+  state.commits = [];
+  state.nextAfterHandoff = null;
+
+  $('#card').classList.remove('active', 'locked', 'reveal');
+  $('#handoff').classList.remove('active');
+  $('#commit').classList.remove('active');
+  $('#picker').style.opacity = '1';
+  setMode('solo');
+}
+
+// ============================================================
+// WIRING
+// ============================================================
+$('#mode-toggle').addEventListener('click', () => {
+  haptic(8);
+  setMode(state.mode === 'solo' ? 'pair' : 'solo');
+});
+
+$('#handoff').addEventListener('click', onHandoffTap);
+
+$('#commit-yes').addEventListener('click', () => onCommitTap('in'));
+$('#commit-no').addEventListener('click', () => onCommitTap('another'));
+
+$('#card-back').addEventListener('click', () => {
+  haptic(6);
+  const keepMode = state.mode;
+  resetAll();
+  if (keepMode === 'pair') setMode('pair');
+});
+
+renderChips(false);
+</script>
+</body>
+</html>
