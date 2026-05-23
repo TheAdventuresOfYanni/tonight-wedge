@@ -30,28 +30,21 @@
     background: var(--ground);
     color: var(--paper);
     font-family: var(--sans);
-    height: 100vh;
-    height: 100dvh;
+    height: 100vh; height: 100dvh;
     overflow: hidden;
     overscroll-behavior: none;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    user-select: none;
-    -webkit-user-select: none;
+    user-select: none; -webkit-user-select: none;
   }
 
-  .serif {
-    font-family: var(--serif);
-    font-weight: 300;
-    font-optical-sizing: auto;
-  }
+  .serif { font-family: var(--serif); font-weight: 300; font-optical-sizing: auto; }
 
-  /* ============ PICKER ============ */
+  /* ============ PICKER (shared shell) ============ */
   .picker {
     position: fixed; inset: 0;
     display: flex; flex-direction: column;
-    justify-content: center; align-items: center;
-    padding: 32px 28px max(env(safe-area-inset-bottom, 0px), 32px);
+    padding: max(env(safe-area-inset-top, 0px), 76px) 24px max(env(safe-area-inset-bottom, 0px), 24px);
     background:
       radial-gradient(ellipse at 30% 18%, #251a14 0%, transparent 55%),
       radial-gradient(ellipse at 78% 88%, #18141a 0%, transparent 65%),
@@ -61,10 +54,8 @@
   }
 
   .brand {
-    font-family: var(--serif);
-    font-weight: 300;
-    font-size: 22px;
-    letter-spacing: -0.025em;
+    font-family: var(--serif); font-weight: 300;
+    font-size: 22px; letter-spacing: -0.025em;
     color: var(--dim);
     position: absolute;
     top: max(env(safe-area-inset-top, 0px), 28px);
@@ -84,20 +75,28 @@
   .mode-toggle:active { color: var(--paper); }
   .picker[data-mode="pair"] .mode-toggle { color: var(--amber); }
 
-  .picker-inner {
-    width: 100%; max-width: 380px;
-    display: flex; flex-direction: column; gap: 36px;
-  }
-
   .picker-q {
-    font-family: var(--serif);
-    font-weight: 300;
-    font-size: clamp(26px, 6.8vw, 32px);
+    font-family: var(--serif); font-weight: 300;
+    font-size: clamp(24px, 6vw, 30px);
     line-height: 1.2; letter-spacing: -0.02em;
     color: var(--paper); max-width: 14ch;
+    margin-bottom: 8px;
+  }
+  .picker-sub {
+    font-size: 13px; color: var(--dim);
+    line-height: 1.5; margin-bottom: 22px;
+    max-width: 28ch;
   }
 
-  .chips { display: flex; flex-direction: column; gap: 9px; }
+  /* ====== SOLO chips ====== */
+  .solo-view {
+    flex: 1;
+    display: flex; flex-direction: column; justify-content: center;
+    max-width: 380px; width: 100%; margin: 0 auto;
+  }
+  .picker[data-mode="pair"] .solo-view { display: none; }
+
+  .chips { display: flex; flex-direction: column; gap: 9px; margin-top: 8px; }
 
   .chip {
     display: flex; align-items: center; gap: 14px;
@@ -110,31 +109,145 @@
     transition: transform 220ms var(--ease), background 240ms var(--ease), border-color 240ms var(--ease), opacity 360ms var(--ease);
   }
   .chip:active { transform: scale(0.98); background: rgba(244, 239, 230, 0.04); }
-
-  .chip.confirmed {
-    border-color: rgba(212, 163, 92, 0.55);
-    background: rgba(212, 163, 92, 0.10);
-  }
-
   .chip-dot {
     width: 7px; height: 7px; border-radius: 50%;
     flex-shrink: 0; opacity: 0.85;
     transition: transform 220ms var(--ease);
   }
-  .chip.confirmed .chip-dot { transform: scale(1.4); }
-
   .chip[data-vibe="cozy-in"]    .chip-dot { background: #c98c5a; }
   .chip[data-vibe="quiet-out"]  .chip-dot { background: #6b8a98; }
   .chip[data-vibe="lively"]     .chip-dot { background: #c8635a; }
   .chip[data-vibe="adventure"]  .chip-dot { background: #8a6db0; }
   .chip[data-vibe="surprise"]   .chip-dot { background: var(--amber); animation: dotPulse 2.4s ease-in-out infinite; }
-
   @keyframes dotPulse {
     0%, 100% { opacity: 0.4; transform: scale(0.85); }
     50% { opacity: 1; transform: scale(1.1); }
   }
 
-  /* ============ EXPANDER (chip → card) ============ */
+  /* ====== PAIR minicards ====== */
+  .pair-view {
+    flex: 1; display: none;
+    flex-direction: column;
+    max-width: 420px; width: 100%; margin: 0 auto;
+  }
+  .picker[data-mode="pair"] .pair-view { display: flex; }
+
+  .minicards {
+    display: flex; flex-direction: column; gap: 10px;
+    flex: 1; min-height: 0;
+  }
+
+  .minicard {
+    position: relative;
+    flex: 1; min-height: 0;
+    padding: 16px 18px;
+    border: 1px solid var(--hair);
+    border-radius: 18px;
+    background: rgba(14,14,16,0.5);
+    cursor: pointer; text-align: left;
+    font-family: inherit; color: var(--paper);
+    overflow: hidden;
+    transition: transform 220ms var(--ease), border-color 240ms var(--ease), opacity 360ms var(--ease), background 240ms var(--ease);
+    display: flex; flex-direction: column;
+  }
+  .minicard:active { transform: scale(0.99); }
+  .minicard.selected {
+    border-color: rgba(212, 163, 92, 0.7);
+    background: rgba(212, 163, 92, 0.08);
+  }
+
+  .minicard-bg {
+    position: absolute; inset: 0;
+    opacity: 0.45;
+    transition: opacity 320ms var(--ease);
+    z-index: 0;
+  }
+  .minicard.selected .minicard-bg { opacity: 0.75; }
+  .minicard-bg::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='1.0' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.5 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    mix-blend-mode: overlay; opacity: 0.3;
+  }
+  .minicard-bg::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(14,14,16,0) 0%, rgba(14,14,16,0.5) 100%);
+  }
+
+  .minicard-content {
+    position: relative; z-index: 1;
+    display: flex; flex-direction: column;
+    height: 100%;
+    justify-content: flex-end;
+    padding-right: 28px;
+  }
+
+  .minicard-prose {
+    font-family: var(--serif); font-weight: 300;
+    font-size: clamp(15px, 4vw, 17px);
+    line-height: 1.3;
+    color: var(--paper);
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+    text-wrap: balance;
+  }
+  .minicard-meta {
+    font-size: 11.5px;
+    color: var(--dim);
+    line-height: 1.4;
+  }
+
+  .minicard-check {
+    position: absolute;
+    top: 14px; right: 14px;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(244,239,230,0.3);
+    z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 220ms var(--ease), border-color 220ms var(--ease);
+  }
+  .minicard.selected .minicard-check {
+    background: var(--amber);
+    border-color: var(--amber);
+  }
+  .minicard.selected .minicard-check::after {
+    content: '✓';
+    color: var(--ground);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .picker-cta {
+    margin-top: 14px;
+    padding: 16px;
+    border-radius: 100px;
+    background: var(--paper);
+    color: var(--ground);
+    font-family: inherit; font-size: 15px; font-weight: 500;
+    border: none; cursor: pointer;
+    opacity: 0; pointer-events: none;
+    transform: translateY(8px);
+    transition: opacity 320ms var(--ease), transform 320ms var(--ease), background 200ms var(--ease);
+  }
+  .picker-cta.ready {
+    opacity: 1; pointer-events: auto;
+    transform: translateY(0);
+  }
+  .picker-cta:active { background: #e8e2d6; }
+
+  .picker-counter {
+    margin-top: 14px;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--faint);
+    transition: color 220ms var(--ease), opacity 220ms var(--ease);
+  }
+  .picker-counter.complete { color: var(--amber); opacity: 0; }
+
+  /* ============ EXPANDER ============ */
   .expander {
     position: fixed; z-index: 5; pointer-events: none;
     transition:
@@ -165,7 +278,6 @@
   .handoff.active { opacity: 1; pointer-events: auto; }
 
   .handoff-inner { text-align: center; max-width: 360px; }
-
   .handoff-eyebrow {
     font-size: 11px; letter-spacing: 0.28em;
     color: var(--faint); text-transform: uppercase;
@@ -183,7 +295,6 @@
     text-transform: uppercase;
     animation: handoffPulse 2.4s ease-in-out infinite;
   }
-
   .handoff.active .handoff-eyebrow { animation: handoffRise 600ms var(--ease) 80ms both; }
   .handoff.active .handoff-line    { animation: handoffRise 800ms var(--ease) 200ms both; }
   .handoff.active .handoff-hint    { animation: handoffPulse 2.4s ease-in-out 900ms infinite; }
@@ -231,8 +342,7 @@
   .card-back {
     background: transparent; border: none;
     color: var(--dim); font-size: 22px; line-height: 1;
-    padding: 8px 12px 8px 0;
-    cursor: pointer; font-family: inherit;
+    padding: 8px 12px 8px 0; cursor: pointer; font-family: inherit;
     transition: color 200ms var(--ease);
   }
   .card-back:active { color: var(--paper); }
@@ -248,16 +358,14 @@
     padding: 24px 26px max(env(safe-area-inset-bottom, 0px), 22px);
   }
   .card-prose {
-    font-family: var(--serif);
-    font-weight: 300; font-optical-sizing: auto;
+    font-family: var(--serif); font-weight: 300; font-optical-sizing: auto;
     font-size: clamp(26px, 6.6vw, 33px);
     line-height: 1.2; letter-spacing: -0.02em;
     margin-bottom: 12px; max-width: 22ch;
     color: var(--paper); text-wrap: balance;
   }
   .card-meta {
-    color: var(--dim);
-    font-size: 13px; line-height: 1.55;
+    color: var(--dim); font-size: 13px; line-height: 1.55;
     margin-bottom: 22px; max-width: 36ch;
   }
   .card-nudge {
@@ -301,8 +409,11 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  @media (max-height: 680px) {
-    .picker-inner { gap: 28px; }
+  @media (max-height: 720px) {
+    .picker { padding-top: max(env(safe-area-inset-top, 0px), 68px); }
+    .picker-q { font-size: clamp(22px, 5.5vw, 26px); margin-bottom: 4px; }
+    .picker-sub { margin-bottom: 16px; font-size: 12.5px; }
+    .minicard-prose { font-size: 14.5px; }
     .card-prose { font-size: clamp(22px, 6vw, 28px); }
     .card-meta { margin-bottom: 16px; }
   }
@@ -313,9 +424,20 @@
 <section class="picker" id="picker" data-mode="solo">
   <div class="brand">tonight.</div>
   <button class="mode-toggle" id="mode-toggle">for two →</button>
-  <div class="picker-inner">
+
+  <!-- SOLO view: chips -->
+  <div class="solo-view" id="solo-view">
     <div class="picker-q serif">what’s the night?</div>
     <div class="chips" id="chips"></div>
+  </div>
+
+  <!-- PAIR view: 3 minicards -->
+  <div class="pair-view" id="pair-view">
+    <div class="picker-q serif">tonight’s three.</div>
+    <div class="picker-sub">pick the two you’d take. <span id="pair-turn">your turn.</span></div>
+    <div class="minicards" id="minicards"></div>
+    <button class="picker-cta" id="pair-cta">ready →</button>
+    <div class="picker-counter" id="pair-counter">tap two</div>
   </div>
 </section>
 
@@ -337,6 +459,9 @@
 </section>
 
 <script>
+// ============================================================
+// VIBE definitions (solo mode)
+// ============================================================
 const DEFAULT_VIBES = {
   'cozy-in':   { mode: 'in',  energyBias: 'low',    moodBias: ['calm'] },
   'quiet-out': { mode: 'out', energyBias: 'low',    moodBias: ['calm'] },
@@ -345,7 +470,6 @@ const DEFAULT_VIBES = {
   'surprise':  { mode: null,  energyBias: null,     moodBias: null },
 };
 let VIBES = structuredClone(DEFAULT_VIBES);
-
 const VIBE_ORDER = ['cozy-in', 'quiet-out', 'lively', 'adventure', 'surprise'];
 
 const CHIP_LABEL = {
@@ -355,17 +479,16 @@ const CHIP_LABEL = {
   'adventure': 'a little adventure',
   'surprise': 'surprise me',
 };
-
 const TAG_LABEL = {
-  'cozy-in': 'cozy in',
-  'quiet-out': 'quiet out',
-  'lively': 'lively',
-  'adventure': 'adventure',
-  'surprise': 'surprise',
+  'cozy-in': 'cozy in', 'quiet-out': 'quiet out',
+  'lively': 'lively', 'adventure': 'adventure', 'surprise': 'surprise',
 };
 
 const ENERGY_RANK = { low: 0, medium: 1, high: 2 };
 
+// ============================================================
+// POIs
+// ============================================================
 const POIS = [
   { id:'la-baracca', mode:'out',
     prose:'a plate of clams and chilled vermentino at La Baracca — the kind of meal you remember on the walk home.',
@@ -497,19 +620,27 @@ const POIS = [
     energy:'low', mood:['calm','curious'], bg:['#1c1d28','#060608'], maps:null },
 ];
 
+// ============================================================
+// STATE
+// ============================================================
 const state = {
   mode: 'solo',
-  pulses: [],
   vibe: null,
   secondary: null,
   current: null,
-  nextAfterHandoff: null,
   rejected: new Set(),
   rejectStreak: 0,
   locked: false,
+
+  // PAIR
+  options: [],            // 3 POIs offered
+  picks: [new Set(), new Set()], // first picker's selections, then second
+  pickerIdx: 0,           // 0 = first picker, 1 = second picker
+  selected: new Set(),    // current picker's in-progress selections
 };
 
 const $ = sel => document.querySelector(sel);
+const $$ = sel => document.querySelectorAll(sel);
 const haptic = (ms = 8) => { if (navigator.vibrate) try { navigator.vibrate(ms); } catch (e) {} };
 
 function shuffle(arr) {
@@ -520,6 +651,7 @@ function shuffle(arr) {
   }
   return a;
 }
+function randomFrom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 function makeBg([a, b]) {
   return `radial-gradient(ellipse at 25% 18%, ${a} 0%, transparent 55%),` +
@@ -527,22 +659,9 @@ function makeBg([a, b]) {
          `linear-gradient(180deg, ${a} 0%, ${b} 100%)`;
 }
 
-function mergeVibes(v1, v2) {
-  if (v1 === 'surprise' && v2 === 'surprise') return { primary: 'surprise', secondary: 'surprise' };
-  if (v1 === 'surprise') return { primary: v2, secondary: 'surprise' };
-  if (v2 === 'surprise') return { primary: v1, secondary: 'surprise' };
-  if (v1 === v2) return { primary: v1, secondary: null };
-  const isIn = v => v === 'cozy-in';
-  if (isIn(v1) !== isIn(v2)) {
-    const outVibe = isIn(v1) ? v2 : v1;
-    return { primary: 'quiet-out', secondary: outVibe };
-  }
-  const energyOf = v => ({ 'quiet-out': 0, 'adventure': 1, 'lively': 2 }[v] ?? 0);
-  const lower = energyOf(v1) <= energyOf(v2) ? v1 : v2;
-  const higher = lower === v1 ? v2 : v1;
-  return { primary: lower, secondary: higher };
-}
-
+// ============================================================
+// SOLO scoring (unchanged)
+// ============================================================
 function scoreCandidate(p, vibeKey, secondaryKey) {
   const v = VIBES[vibeKey];
   if (v.mode && p.mode !== v.mode) return -Infinity;
@@ -556,37 +675,42 @@ function scoreCandidate(p, vibeKey, secondaryKey) {
   }
   if (secondaryKey && secondaryKey !== vibeKey) {
     const sv = VIBES[secondaryKey];
-    if (sv && sv.moodBias) {
-      s += sv.moodBias.some(m => p.mood.includes(m)) ? 0.8 : 0.0;
-    }
+    if (sv && sv.moodBias) s += sv.moodBias.some(m => p.mood.includes(m)) ? 0.8 : 0.0;
     if (secondaryKey === 'surprise') s += Math.random() * 0.6;
   }
   return s;
 }
-
 function pickPOI() {
   const ranked = POIS
     .filter(p => !state.rejected.has(p.id))
     .map(p => ({ p, s: scoreCandidate(p, state.vibe, state.secondary) }))
     .filter(x => x.s > -Infinity)
     .sort((a, b) => b.s - a.s);
-  if (!ranked.length) {
-    state.rejected.clear();
-    return pickPOI();
-  }
+  if (!ranked.length) { state.rejected.clear(); return pickPOI(); }
   return ranked[0].p;
 }
 
-function renderChips(shuffled = false) {
-  const order = shuffled ? shuffle(VIBE_ORDER) : VIBE_ORDER;
+// ============================================================
+// PAIR: pick 3 varied options
+// ============================================================
+function pickThreeOptions() {
+  const ins = POIS.filter(p => p.mode === 'in');
+  const quiet = POIS.filter(p => p.mode === 'out' && p.energy === 'low');
+  const energetic = POIS.filter(p => p.mode === 'out' && (p.energy === 'medium' || p.energy === 'high'));
+  return shuffle([randomFrom(ins), randomFrom(quiet), randomFrom(energetic)]);
+}
+
+// ============================================================
+// SOLO chips
+// ============================================================
+function renderChips() {
   const c = $('#chips');
-  c.innerHTML = order.map(v => `
+  c.innerHTML = VIBE_ORDER.map(v => `
     <button class="chip" data-vibe="${v}">
       <span class="chip-dot"></span>${CHIP_LABEL[v]}
     </button>
   `).join('');
   c.querySelectorAll('.chip').forEach(chip => {
-    chip.style.opacity = '1';
     chip.addEventListener('click', () => onChipTap(chip));
   });
 }
@@ -594,39 +718,121 @@ function renderChips(shuffled = false) {
 function onChipTap(chipEl) {
   const vibe = chipEl.dataset.vibe;
   haptic(10);
-
-  // PAIR: pulse 1 → handoff
-  if (state.mode === 'pair' && state.pulses.length === 0) {
-    state.pulses.push(vibe);
-    chipEl.classList.add('confirmed');
-    setTimeout(() => {
-      $('#picker').style.opacity = '0';
-      showHandoff('pass the phone.', 'tap when ready', 'now');
-      state.nextAfterHandoff = 'pulse2';
-    }, 260);
-    return;
-  }
-
-  // PAIR: pulse 2 → resolve, morph to card
-  if (state.mode === 'pair' && state.pulses.length === 1) {
-    state.pulses.push(vibe);
-    const merged = mergeVibes(state.pulses[0], state.pulses[1]);
-    state.vibe = merged.primary;
-    state.secondary = merged.secondary;
-    state.current = pickPOI();
-    morphChipToCard(chipEl, state.current);
-    return;
-  }
-
-  // SOLO
   state.vibe = vibe;
   state.secondary = null;
   state.current = pickPOI();
-  morphChipToCard(chipEl, state.current);
+  morphElementToCard(chipEl, state.current);
 }
 
-function morphChipToCard(chipEl, poi) {
-  const rect = chipEl.getBoundingClientRect();
+// ============================================================
+// PAIR minicards
+// ============================================================
+function renderMinicards() {
+  const c = $('#minicards');
+  state.selected = new Set();
+  c.innerHTML = state.options.map(p => `
+    <button class="minicard" data-id="${p.id}">
+      <div class="minicard-bg" style="background: ${makeBg(p.bg)}"></div>
+      <div class="minicard-check"></div>
+      <div class="minicard-content">
+        <div class="minicard-prose">${p.prose}</div>
+        <div class="minicard-meta">${p.meta}</div>
+      </div>
+    </button>
+  `).join('');
+  c.querySelectorAll('.minicard').forEach(el => {
+    el.style.opacity = '1';
+    el.addEventListener('click', () => onMinicardTap(el));
+  });
+  updatePairUi();
+}
+
+function onMinicardTap(el) {
+  const id = el.dataset.id;
+  haptic(6);
+
+  if (state.selected.has(id)) {
+    state.selected.delete(id);
+    el.classList.remove('selected');
+  } else {
+    if (state.selected.size >= 2) {
+      // remove the first one selected
+      const firstId = state.selected.values().next().value;
+      state.selected.delete(firstId);
+      document.querySelector(`.minicard[data-id="${firstId}"]`).classList.remove('selected');
+    }
+    state.selected.add(id);
+    el.classList.add('selected');
+  }
+  updatePairUi();
+}
+
+function updatePairUi() {
+  const cta = $('#pair-cta');
+  const counter = $('#pair-counter');
+  if (state.selected.size === 2) {
+    cta.classList.add('ready');
+    counter.classList.add('complete');
+  } else {
+    cta.classList.remove('ready');
+    counter.classList.remove('complete');
+    counter.textContent = state.selected.size === 1 ? 'tap one more' : 'tap two';
+  }
+}
+
+function onPairCta() {
+  if (state.selected.size !== 2) return;
+  haptic(12);
+  state.picks[state.pickerIdx] = new Set(state.selected);
+
+  if (state.pickerIdx === 0) {
+    // hand off to second person
+    $('#picker').style.opacity = '0';
+    state.pickerIdx = 1;
+    showHandoff('pass the phone.', 'tap when ready', 'now');
+  } else {
+    // both done — evaluate
+    revealWinner();
+  }
+}
+
+// ============================================================
+// PAIR reveal
+// ============================================================
+function revealWinner() {
+  const a = state.picks[0];
+  const b = state.picks[1];
+  const overlap = [...a].filter(id => b.has(id));
+  // overlap is at least 1 by math; if 2, random tiebreak
+  const winnerId = overlap.length === 1 ? overlap[0] : randomFrom(overlap);
+  const winner = state.options.find(p => p.id === winnerId);
+  state.current = winner;
+  state.vibe = null;
+
+  // fade out non-winning minicards
+  document.querySelectorAll('.minicard').forEach(el => {
+    if (el.dataset.id !== winnerId) {
+      el.style.transition = 'opacity 360ms var(--ease)';
+      el.style.opacity = '0';
+    }
+  });
+
+  // morph the winning minicard to full card
+  setTimeout(() => {
+    const winnerEl = document.querySelector(`.minicard[data-id="${winnerId}"]`);
+    morphElementToCard(winnerEl, winner, { pair: true, locked: true });
+  }, 380);
+}
+
+// ============================================================
+// MORPH (works for chip OR minicard)
+// ============================================================
+function morphElementToCard(srcEl, poi, opts = {}) {
+  const { pair = false, locked = false } = opts;
+  const rect = srcEl.getBoundingClientRect();
+  const computed = getComputedStyle(srcEl);
+  const radius = computed.borderRadius || '100px';
+
   const expander = document.createElement('div');
   expander.className = 'expander';
   expander.style.background = makeBg(poi.bg);
@@ -634,26 +840,39 @@ function morphChipToCard(chipEl, poi) {
   expander.style.top = rect.top + 'px';
   expander.style.width = rect.width + 'px';
   expander.style.height = rect.height + 'px';
-  expander.style.borderRadius = '100px';
+  expander.style.borderRadius = radius;
   document.body.appendChild(expander);
 
-  document.querySelectorAll('.chip').forEach(c => { if (c !== chipEl) c.style.opacity = '0'; });
+  // fade non-source siblings (chips only)
+  if (!pair) {
+    document.querySelectorAll('.chip').forEach(c => { if (c !== srcEl) c.style.opacity = '0'; });
+  }
+
   requestAnimationFrame(() => expander.classList.add('full'));
 
   setTimeout(() => {
     $('#card-bg').style.background = makeBg(poi.bg);
-    $('#card-tag').textContent = state.mode === 'pair'
-      ? 'tonight, together'
+    $('#card-tag').textContent = pair
+      ? (locked ? 'tonight’s plan, together' : 'tonight, together')
       : (TAG_LABEL[state.vibe] || 'tonight');
-    renderCardBody(poi);
+    if (locked || pair) {
+      // pair reveal lands directly in locked state
+      $('#card').classList.add('locked');
+      state.locked = true;
+      renderLockedCardBody(poi, pair);
+    } else {
+      renderCardBody(poi);
+    }
     $('#card').classList.add('active');
     setTimeout(() => expander.remove(), 60);
-  }, 600);
+  }, 620);
 }
 
+// ============================================================
+// CARD BODY (solo, with yes/another)
+// ============================================================
 function renderCardBody(poi, { withNudge = false } = {}) {
-  const body = $('#card-body');
-  body.innerHTML = `
+  $('#card-body').innerHTML = `
     <div class="card-anim">
       <div class="card-prose serif">${poi.prose}</div>
       <div class="card-meta">${poi.meta}</div>
@@ -670,10 +889,31 @@ function renderCardBody(poi, { withNudge = false } = {}) {
   $('#btn-yes').addEventListener('click', () => { haptic(14); lockIn(poi); });
   $('#btn-another').addEventListener('click', () => { haptic(6); rejectAndRoll(); });
   if (withNudge) {
-    body.querySelectorAll('.card-nudge a').forEach(a => {
+    $('#card-body').querySelectorAll('.card-nudge a').forEach(a => {
       a.addEventListener('click', () => { haptic(10); applyNudge(a.dataset.dir); });
     });
   }
+}
+
+function renderLockedCardBody(poi, pair) {
+  const dirHref = poi.maps
+    ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(poi.maps)}`
+    : null;
+  const shareText = encodeURIComponent('tonight: ' + poi.prose);
+
+  $('#card-body').innerHTML = `
+    <div class="card-anim">
+      <div class="card-prose serif">${poi.prose}</div>
+      <div class="card-meta">${poi.meta}</div>
+      <div class="card-actions">
+        <button class="btn" id="btn-redo">new plan</button>
+        ${dirHref
+          ? `<a class="btn btn-primary" href="${dirHref}" target="_blank" rel="noopener">directions →</a>`
+          : `<a class="btn btn-primary" href="https://wa.me/?text=${shareText}" target="_blank" rel="noopener">share →</a>`}
+      </div>
+    </div>
+  `;
+  $('#btn-redo').addEventListener('click', () => { haptic(8); resetAll(); });
 }
 
 function rejectAndRoll() {
@@ -704,7 +944,7 @@ function applyNudge(dir) {
 function lockIn(poi) {
   state.locked = true;
   $('#card').classList.add('locked');
-  $('#card-tag').textContent = state.mode === 'pair' ? 'tonight’s plan, together' : 'tonight’s plan';
+  $('#card-tag').textContent = 'tonight’s plan';
 
   const dirHref = poi.maps
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(poi.maps)}`
@@ -728,6 +968,9 @@ function lockIn(poi) {
   }, 220);
 }
 
+// ============================================================
+// HANDOFF
+// ============================================================
 function showHandoff(line, hint, eyebrow) {
   $('#handoff-line').textContent = line || 'pass the phone.';
   $('#handoff-hint').textContent = hint || 'tap when ready';
@@ -738,22 +981,33 @@ function showHandoff(line, hint, eyebrow) {
 function onHandoffTap() {
   haptic(8);
   $('#handoff').classList.remove('active');
-  const next = state.nextAfterHandoff;
-  state.nextAfterHandoff = null;
-  if (next === 'pulse2') {
-    renderChips(true);
+  // pair second-pick render
+  if (state.mode === 'pair' && state.pickerIdx === 1) {
+    $('#pair-turn').textContent = 'their turn.';
+    renderMinicards();
     $('#picker').style.opacity = '1';
   }
 }
 
+// ============================================================
+// MODE + RESET
+// ============================================================
 function setMode(mode) {
   state.mode = mode;
-  state.pulses = [];
+  state.pickerIdx = 0;
+  state.picks = [new Set(), new Set()];
+  state.selected = new Set();
   state.rejected.clear();
   state.rejectStreak = 0;
   $('#picker').dataset.mode = mode;
   $('#mode-toggle').textContent = mode === 'pair' ? '← just me' : 'for two →';
-  renderChips(false);
+  $('#pair-turn').textContent = 'your turn.';
+  if (mode === 'solo') {
+    renderChips();
+  } else {
+    state.options = pickThreeOptions();
+    renderMinicards();
+  }
   $('#picker').style.opacity = '1';
 }
 
@@ -765,8 +1019,10 @@ function resetAll() {
   state.rejected.clear();
   state.rejectStreak = 0;
   state.locked = false;
-  state.pulses = [];
-  state.nextAfterHandoff = null;
+  state.picks = [new Set(), new Set()];
+  state.selected = new Set();
+  state.pickerIdx = 0;
+  state.options = [];
 
   $('#card').classList.remove('active', 'locked');
   $('#handoff').classList.remove('active');
@@ -774,12 +1030,16 @@ function resetAll() {
   setMode('solo');
 }
 
+// ============================================================
+// WIRING
+// ============================================================
 $('#mode-toggle').addEventListener('click', () => {
   haptic(8);
   setMode(state.mode === 'solo' ? 'pair' : 'solo');
 });
 
 $('#handoff').addEventListener('click', onHandoffTap);
+$('#pair-cta').addEventListener('click', onPairCta);
 
 $('#card-back').addEventListener('click', () => {
   haptic(6);
@@ -788,7 +1048,7 @@ $('#card-back').addEventListener('click', () => {
   if (keepMode === 'pair') setMode('pair');
 });
 
-renderChips(false);
+renderChips();
 </script>
 </body>
 </html>
